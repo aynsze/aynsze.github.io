@@ -50,24 +50,15 @@
         border-radius: 8px;
         overflow: hidden;
         font-size: 1em;
-        table-layout: fixed; /* ← 列幅を固定比率に */
     }
-    
+
     th, td {
         border-bottom: 1px solid #ddd;
         padding: 8px;
         text-align: center;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        white-space: nowrap; /* ✅ 折り返し防止でスクロール可能に */
     }
-    
-    /* ✅ 列ごとの幅指定 */
-    th:nth-child(1), td:nth-child(1) { width: 10%; }
-    th:nth-child(2), td:nth-child(2) { width: 30%; }
-    th:nth-child(3), td:nth-child(3) { width: 30%; }
-    th:nth-child(4), td:nth-child(4) { width: 30%; }
-    
+
     th {
         background-color: #f0f0f0;
         position: sticky;
@@ -92,6 +83,14 @@
     input[type="number"]:focus {
         outline: none;
     }
+
+    /* Chrome, Edge, Safari */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
 
     button {
         display: block;
@@ -118,7 +117,7 @@
             gap: 20px;
         }
         input[type="number"] {
-            width: 100%;
+            width: 90%;
         }
     }
 </style>
@@ -138,9 +137,9 @@
     <thead>
         <tr>
             <th>#</th>
-            <th id="qtyLabel">重さ(g)</th>
-            <th>価格(円)</th>
-            <th>1単位あたり(円)</th>
+            <th id="qtyLabel">重さ（g）</th>
+            <th>価格（円）</th>
+            <th>単位（円）</th>
         </tr>
     </thead>
     <tbody></tbody>
@@ -254,4 +253,3 @@
 
 </body>
 </html>
-
