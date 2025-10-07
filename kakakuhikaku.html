@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>価格比較ツール</title>
 <style>
     body {
@@ -18,39 +18,45 @@
         text-align: center;
     }
 
+    /* ✅ チェックボックスを横並び・中央寄せ */
     .unit-select {
         margin-bottom: 12px;
         display: flex;
         justify-content: center;
-        gap: 20px;
         align-items: center;
+        gap: 30px;
+        flex-wrap: nowrap;
         font-size: 1.1em;
     }
 
     input[type="checkbox"] {
         transform: scale(1.3);
-        margin-right: 5px;
+        margin-right: 6px;
     }
 
+    /* ✅ テーブルを完全にスクロール可能に */
     .table-container {
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
         border-radius: 8px;
+        width: 100%;
     }
 
     table {
-        width: 90%;
-        min-width: 360px;
+        width: 100%;
+        min-width: 400px;
         border-collapse: collapse;
         background: white;
         border-radius: 8px;
         overflow: hidden;
-        font-size: 0.95em;
+        font-size: 1em;
     }
 
     th, td {
         border-bottom: 1px solid #ddd;
         padding: 8px;
         text-align: center;
+        white-space: nowrap; /* ✅ 折り返し防止でスクロール可能に */
     }
 
     th {
@@ -64,12 +70,18 @@
         background-color: #d1ffd1 !important;
     }
 
+    /* ✅ 入力時にズームしない（font-size 16px以上必須） */
     input[type="number"] {
         width: 90%;
         padding: 6px;
-        font-size: 1em;
+        font-size: 16px;
         border: 1px solid #ccc;
         border-radius: 4px;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    input[type="number"]:focus {
+        outline: none;
     }
 
     button {
@@ -89,17 +101,12 @@
         background-color: #005fa3;
     }
 
-    /* 🔹 小さな画面に最適化 */
     @media (max-width: 600px) {
         body {
             padding: 10px;
         }
         .unit-select {
-            flex-direction: column;
-            gap: 10px;
-        }
-        table {
-            font-size: 0.9em;
+            gap: 20px;
         }
         input[type="number"] {
             width: 100%;
@@ -111,7 +118,7 @@
 
 <h2>価格比較ツール</h2>
 
-<!-- ✅ テーブル外の単位選択 -->
+<!-- ✅ 単位選択を横並びに -->
 <div class="unit-select">
     <label><input type="checkbox" id="unitG" checked> g 単位</label>
     <label><input type="checkbox" id="unitPcs"> 個 単位</label>
@@ -238,4 +245,3 @@
 
 </body>
 </html>
-
