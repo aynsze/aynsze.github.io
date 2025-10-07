@@ -50,15 +50,24 @@
         border-radius: 8px;
         overflow: hidden;
         font-size: 1em;
+        table-layout: fixed; /* ← 列幅を固定比率に */
     }
-
+    
     th, td {
         border-bottom: 1px solid #ddd;
         padding: 8px;
         text-align: center;
-        white-space: nowrap; /* ✅ 折り返し防止でスクロール可能に */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
-
+    
+    /* ✅ 列ごとの幅指定 */
+    th:nth-child(1), td:nth-child(1) { width: 10%; }
+    th:nth-child(2), td:nth-child(2) { width: 30%; }
+    th:nth-child(3), td:nth-child(3) { width: 30%; }
+    th:nth-child(4), td:nth-child(4) { width: 30%; }
+    
     th {
         background-color: #f0f0f0;
         position: sticky;
@@ -245,3 +254,4 @@
 
 </body>
 </html>
+
