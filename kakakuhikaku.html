@@ -206,17 +206,20 @@
 
     // ===== 行計算 =====
     function updateRow(row) {
-        let qty = parseFloat(row.querySelector('.quantity').value);
+        const qty = parseFloat(row.querySelector('.quantity').value);
         const price = parseFloat(row.querySelector('.price').value);
         const perUnit = row.querySelector('.perUnit');
     
         if (!isNaN(qty) && !isNaN(price) && qty > 0 && price > 0) {
-            // ✅ 「g」の場合は100倍して計算
+            let unitPrice = price / qty;
+    
+            // ✅ 「g」の場合は単位あたりを100倍
             if (unitG.checked) {
-                qty *= 100;
+                unitPrice *= 100;
             }
-            // ✅ 単価は小数点第2位まで
-            perUnit.value = (price / qty).toFixed(2);
+    
+            // ✅ 小数点第2位まで表示
+            perUnit.value = unitPrice.toFixed(2);
         } else {
             perUnit.value = '';
         }
@@ -260,4 +263,5 @@
 
 </body>
 </html>
+
 
