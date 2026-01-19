@@ -1,0 +1,103 @@
+以下は、JavaScript + HTML5 Canvas を使った、シンプルで動くホワイトボードのサンプルコードです。
+ブラウザで開くだけで描画できます。
+
+完全動作サンプル
+Html<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>シンプルホワイトボード</title>
+<style>
+  body { margin: 0; background: #f0f0f0; }
+  canvas { background: #fff; display: block; margin: auto; border: 1px solid #ccc; }
+  #toolbar {
+    text-align: center;
+    padding: 10px;
+    background: #ddd;
+  }
+  input[type=color], input[type=range], button {
+    margin: 0 5px;
+  }
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  色: <input type="color" id="colorPicker" value="#000000">
+  太さ: <input type="range" id="lineWidth" min="1" max="20" value="3">
+  <button id="clearBtn">クリア</button>
+</div>
+
+<canvas id="whiteboard" width="800" height="600"></canvas>
+
+<script>
+(() => {
+  const canvas = document.getElementById('whiteboard');
+  const ctx = canvas.getContext('2d');
+  const colorPicker = document.getElementById('colorPicker');
+  const lineWidthInput = document.getElementById('lineWidth');
+  const clearBtn = document.getElementById('clearBtn');
+
+  let drawing = false;
+  let lastX = 0, lastY = 0;
+
+  // 描画開始
+  const startDrawing = (x, y) => {
+    drawing = true;
+    [lastX, lastY] = [x, y];
+  };
+
+  // 描画終了
+  const stopDrawing = () => {
+    drawing = false;
+    ctx.beginPath(); // パスをリセット
+  };
+
+  // 描画処理
+  const draw = (x, y) => {
+    if (!drawing) return;
+    ctx.strokeStyle = colorPicker.value;
+    ctx.lineWidth = lineWidthInput.value;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+
+    [lastX, lastY] = [x, y];
+  };
+
+  // マウスイベント
+  canvas.addEventListener('mousedown', e => startDrawing(e.offsetX, e.offsetY));
+  canvas.addEventListener('mouseup', stopDrawing);
+  canvas.addEventListener('mouseout', stopDrawing);
+  canvas.addEventListener('mousemove', e => draw(e.offsetX, e.offsetY));
+
+  // タッチイベント（スマホ対応）
+  canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    startDrawing(touch.clientX - rect.left, touch.clientY - rect.top);
+  });
+  canvas.addEventListener('touchend', stopDrawing);
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    draw(touch.clientX - rect.left, touch.clientY - rect.top);
+  });
+
+  // クリアボタン
+  clearBtn.addEventListener('click', () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  });
+})();
+</script>
+
+</body>
+</html>
+
+
