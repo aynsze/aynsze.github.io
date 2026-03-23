@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="ja">
-<!-- grid可変ver -->
 
 <head>
     <meta charset="UTF-8">
@@ -11,29 +10,37 @@
             font-family: sans-serif;
             padding: 16px;
             margin: 0;
-            padding-bottom: 60px;
         }
 
         .header {
             display: flex;
-            align-items: center;
             justify-content: center;
+            padding: 0 16px;
             margin-bottom: 12px;
         }
 
+        .header-inner {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            /* ←ここがポイント */
+            align-items: center;
+        }
+
         select {
-            font-size: 16px;
+            font-size: 20px;
             padding: 4px 8px;
+            min-width: 140px;
         }
 
         .count {
-            font-size: 14px;
+            font-size: 18px;
             color: #666;
+            text-align: right;
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 10px;
         }
 
@@ -50,22 +57,6 @@
 
         .rating {
             font-size: 14px;
-            margin-top: 4px;
-        }
-
-        .footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: #fff;
-            padding: 8px;
-            box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        input {
-            accent-color: #e0e7ff;
         }
     </style>
 </head>
@@ -73,17 +64,13 @@
 <body>
 
     <div class="header">
-        <div>
+        <div class="header-inner">
             <select id="monthSelect"></select>
             <span id="count" class="count"></span>
         </div>
     </div>
 
     <div id="grid" class="grid"></div>
-
-    <div class="footer">
-        <input type="range" id="columnRange" min="3" max="5" value="3">
-    </div>
 
     <script src="script.js"></script>
 </body>
