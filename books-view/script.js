@@ -1,0 +1,94 @@
+// grid可変ver
+
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT3abh6WOEam-G81jfG6h_k6QhQKIjYaJP5e3vIRZkYLUbOS5Vgb3VZsFBBSeYl6sW6l9tBtDr1XzZz/pub?gid=595442390&single=true&output=csv"; // ここにCSVのURLを貼る
+
+let allData = [];
+
+// 初期処理
+async function init() {
+    const res = await fetch(CSV_URL);
+    const text = await res.text();
+
+    const rows = text.trim().split("\n").map(r => r.split(","));
+
+    const headers = rows[0];
+    const data = rows.slice(1);
+
+    // 🔥 オブジェクト化
+    allData = data.map(r => {
+        let obj = {};
+        headers.forEach((h, i) => {
+            const key = h.trim();              // スペース削除
+            const value = r[i] ? r[i].trim() : "";  // \rなど削除
+            obj[key] = value;
+        });
+        return obj;
+    });
+
+    // 月リスト作成
+    const months = [...new Set(allData.map(d => {
+        const date = new Date(d["終了日"]);
+        return `${date.getFullYear()}年${date.getMonth() + 1}月`;
+    }))].sort((a, b) => {
+        const [ay, am] = a.match(/\d+/g).map(Number);
+        const [by, bm] = b.match(/\d+/g).map(Number);
+        return by - ay || bm - am;
+    });
+
+    const select = document.getElementById("monthSelect");
+
+    months.forEach(m => {
+        const option = document.createElement("option");
+        option.value = m;
+        option.textContent = m;
+        select.appendChild(option);
+    });
+
+    select.addEventListener("change", render);
+
+    render(); // 初期表示（最新月）
+    console.log(headers);
+    console.log(allData[0]);
+
+}
+
+// 表示処理
+function render() {
+    const selected = document.getElementById("monthSelect").value;
+    const grid = document.getElementById("grid");
+    const count = document.getElementById("count");
+
+    const range = document.getElementById("columnRange");
+
+    range.addEventListener("input", () => {
+        const val = range.value;
+
+        const grid = document.getElementById("grid");
+        grid.style.gridTemplateColumns = `repeat(${val}, 1fr)`;
+    });
+    grid.innerHTML = "";
+
+    const filtered = allData
+        .filter(d => {
+            const date = new Date(d["終了日"]);
+            const ym = `${date.getFullYear()}年${date.getMonth() + 1}月`;
+            return ym === selected;
+        })
+        .sort((a, b) => new Date(a["終了日"]) - new Date(b["終了日"]));
+
+    count.textContent = filtered.length + "冊";
+
+    filtered.forEach(d => {
+        const div = document.createElement("div");
+        div.className = "card";
+
+        div.innerHTML = `
+      <img class="cover" src="${d["カバーURL"]}">
+      <div class="rating">★ ${d["満足度"]}</div>
+    `;
+
+        grid.appendChild(div);
+    });
+}
+
+init();
