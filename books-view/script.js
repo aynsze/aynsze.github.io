@@ -1,5 +1,3 @@
-// grid可変ver
-
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT3abh6WOEam-G81jfG6h_k6QhQKIjYaJP5e3vIRZkYLUbOS5Vgb3VZsFBBSeYl6sW6l9tBtDr1XzZz/pub?gid=595442390&single=true&output=csv"; // ここにCSVのURLを貼る
 
 let allData = [];
@@ -58,14 +56,6 @@ function render() {
     const grid = document.getElementById("grid");
     const count = document.getElementById("count");
 
-    const range = document.getElementById("columnRange");
-
-    range.addEventListener("input", () => {
-        const val = range.value;
-
-        const grid = document.getElementById("grid");
-        grid.style.gridTemplateColumns = `repeat(${val}, 1fr)`;
-    });
     grid.innerHTML = "";
 
     const filtered = allData
