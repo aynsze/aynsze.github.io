@@ -25,18 +25,31 @@ async function fetchCSV() {
 }
 
 // =============================
-// CSVパース（シンプル版）
+// CSVパース
 // =============================
 function parseCSV(text) {
     const rows = text.trim().split("\n").map(r => r.split(","));
 
-    // ヘッダー除外
     return rows.slice(1).map(row => ({
         cover: row[0],
-        status: row[1],
-        date: row[2],
-        rating: row[3],
+        title: row[1],
+        author: row[2],
+        status: row[3],
+        date: row[4],
+        rating: row[5],
     }));
+}
+
+// =============================
+// 並び替え（著者 → タイトル）
+// =============================
+function sortByAuthorAndTitle(items) {
+    return items.sort((a, b) => {
+        const authorCompare = (a.author || "").localeCompare(b.author || "", "ja");
+        if (authorCompare !== 0) return authorCompare;
+
+        return (a.title || "").localeCompare(b.title || "", "ja");
+    });
 }
 
 // =============================
@@ -44,7 +57,6 @@ function parseCSV(text) {
 // =============================
 function groupByStatus(data) {
     const map = {};
-
     STATUS_ORDER.forEach(s => map[s] = []);
 
     data.forEach(item => {
@@ -76,12 +88,14 @@ function groupByYear(data) {
     });
 
     return Object.keys(map)
-        .sort((a, b) => b - a) // 年は新しい順
+        .sort((a, b) => b - a) // 新しい年が上
         .map(year => {
             const items = map[year];
 
-            // ★ 日付で昇順（1月→12月）
+            // 日付昇順（1月 → 12月）
             items.sort((a, b) => {
+                if (!a.date) return 1;
+                if (!b.date) return -1;
                 return new Date(a.date) - new Date(b.date);
             });
 
@@ -93,6 +107,27 @@ function groupByYear(data) {
 }
 
 // =============================
+// グリッド生成
+// =============================
+function createGrid(items) {
+    const grid = document.createElement("div");
+    grid.className = "book-grid";
+
+    items.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "book-grid__item";
+
+        div.innerHTML = `
+            <img src="${item.cover}" alt="${item.title}" title="${item.title}">
+        `;
+
+        grid.appendChild(div);
+    });
+
+    return grid;
+}
+
+// =============================
 // 描画
 // =============================
 function render(data) {
@@ -100,24 +135,29 @@ function render(data) {
     const grouped = groupByStatus(data);
 
     STATUS_ORDER.forEach(status => {
-        const items = grouped[status];
+        let items = grouped[status];
         if (!items || items.length === 0) return;
+
+        // ★ 「読みたい」と「積読」のみ著者昇順 → 同著者内でタイトル昇順
+        if (status === "読みたい" || status === "積読") {
+            items = sortByAuthorAndTitle(items);
+        }
 
         const block = document.createElement("div");
         block.className = "status-block";
 
-        // ===== ヘッダー =====
+        // ===== ステータスヘッダー =====
         const header = document.createElement("p");
         header.className = "status-block__header";
 
         header.innerHTML = `
-      ${status}
-      <span class="status-block__count">${items.length}</span>
-    `;
+            ${status}
+            <span class="status-block__count">${items.length}</span>
+        `;
 
         block.appendChild(header);
 
-        // ===== 読了だけ年別 =====
+        // ===== 読了 → 年別表示 =====
         if (status === "読了") {
             const years = groupByYear(items);
 
@@ -129,9 +169,9 @@ function render(data) {
                 yearHeader.className = "year-block__header";
 
                 yearHeader.innerHTML = `
-        ${y.year}
-        <span class="status-block__count">${y.items.length}</span>
-        `;
+                    ${y.year}
+                    <span class="status-block__count">${y.items.length}</span>
+                `;
 
                 const grid = createGrid(y.items);
 
@@ -148,27 +188,6 @@ function render(data) {
 
         app.appendChild(block);
     });
-}
-
-// =============================
-// グリッド生成
-// =============================
-function createGrid(items) {
-    const grid = document.createElement("div");
-    grid.className = "book-grid";
-
-    items.forEach(item => {
-        const div = document.createElement("div");
-        div.className = "book-grid__item";
-
-        div.innerHTML = `
-      <img src="${item.cover}" alt="">
-    `;
-
-        grid.appendChild(div);
-    });
-
-    return grid;
 }
 
 // =============================
