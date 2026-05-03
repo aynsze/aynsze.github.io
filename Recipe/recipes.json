@@ -1,0 +1,100 @@
+[
+    {
+        "id": 1777770070944,
+        "title": "タコの酢の物",
+        "source": "arranged",
+        "category": "副菜",
+        "tags": [],
+        "rating": 4,
+        "ingredients": [
+            {
+                "group": null,
+                "name": "茹でタコ",
+                "amount": 100,
+                "unit": "g"
+            },
+            {
+                "group": "A",
+                "name": "砂糖",
+                "amount": 3,
+                "unit": "小さじ"
+            },
+            {
+                "group": "A",
+                "name": "醤油",
+                "amount": 1,
+                "unit": "小さじ"
+            },
+            {
+                "group": "A",
+                "name": "酢",
+                "amount": 6,
+                "unit": "小さじ"
+            }
+        ],
+        "steps": [
+            "タコを切る",
+            "ボウルの中でAを砂糖が溶けるまでよく混ぜておく"
+        ],
+        "url": "https://cookpad.com/jp/recipes/19043944",
+        "image": "https://img-global-jp.cpcdn.com/recipes/2357754/640x640sq80/photo.webp",
+        "memo": "酢、砂糖、醤油は6：3：1の割合"
+    },
+    {
+        "id": 1777770084590,
+        "title": "おかえりマンゴー",
+        "source": "arranged",
+        "category": "他",
+        "tags": [],
+        "rating": 5,
+        "ingredients": [
+            {
+                "group": null,
+                "name": "ドライマンゴー",
+                "amount": 30,
+                "unit": "g"
+            },
+            {
+                "group": null,
+                "name": "ヨーグルト",
+                "amount": 200,
+                "unit": "g"
+            }
+        ],
+        "steps": [
+            "ヨーグルトの中に、マンゴーを重ならずに入れる",
+            "1日～2日冷蔵庫に置く"
+        ],
+        "url": "",
+        "image": "",
+        "memo": ""
+    },
+    {
+        "id": 1777770028464,
+        "title": "ご飯の炊き方",
+        "source": "original",
+        "category": "他",
+        "tags": [],
+        "rating": 4,
+        "image": "",
+        "url": "",
+        "ingredients": [
+            {
+                "group": null,
+                "name": "水",
+                "amount": 500,
+                "unit": "ml"
+            }
+        ],
+        "steps": [
+            "最初のすすぎは綺麗な水ですぐに洗う",
+            "2回か3回洗う",
+            "水を入れる",
+            "夏なら30分、冬なら1時間置く",
+            "中火で沸騰するまで加熱",
+            "蓋がカタカタ言ったら、弱火にして10分",
+            "最後に10秒強火"
+        ],
+        "memo": "お米は目盛でみた3合"
+    }
+]

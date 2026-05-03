@@ -1,0 +1,626 @@
+<!-- index.html -->
+
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>レシピ一覧</title>
+
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 900px;
+            margin: 20px auto;
+        }
+
+        .top-bar {
+            margin-bottom: 10px;
+        }
+
+        .group-title {
+            grid-column: 1 / -1;
+            background: #eee;
+            padding: 6px 10px;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .card {
+            cursor: pointer;
+            border: 1px solid gray;
+            border-radius: 7px;
+        }
+
+        .img-wrap {
+            position: relative;
+        }
+
+        .card-img,
+        .no-image-box {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-top-right-radius: 6px;
+            border-top-left-radius: 6px;
+
+            display: block;
+        }
+
+        .card-img {
+            object-fit: cover;
+        }
+
+        .no-image-box {
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+        }
+
+        .rating {
+            position: absolute;
+            bottom: 6px;
+            right: 7px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .title {
+            font-size: 14px;
+            /* margin-top: 4px; */
+            margin: 0px 4px;
+            height: 42px;
+        }
+
+        /* ★ ここが新UI */
+        .meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+            margin: 0px 4px 4px;
+        }
+
+
+        .category {
+            text-align: right;
+        }
+
+        #addBtn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background: #ff6b6b;
+            color: #fff;
+            font-size: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        #modalBg {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+        }
+
+        #modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            /* width: 320px; */
+            max-height: 80vh;
+            overflow: auto;
+        }
+
+        .ingredient-row {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+
+        /* .ingredient-row input,
+        .ingredient-row select {
+            font-size: 12px;
+        } */
+
+        .ingredient-row .amount {
+            width: 60px;
+        }
+
+        .step-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .step-num {
+            width: 20px;
+            /* font-size: 12px; */
+            color: #666;
+        }
+
+        .step-input {
+            flex: 1;
+            /* font-size: 12px; */
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>レシピ一覧</h1>
+
+    <div class="top-bar">
+        <select id="sortSelect">
+            <option value="cat">ジャンル順（評価昇順）</option>
+            <option value="rating">評価順（ジャンル順）</option>
+        </select>
+    </div>
+
+    <div id="grid" class="grid"></div>
+    <div id="addBtn">＋</div>
+
+    <div id="modalBg"></div>
+
+    <div id="modal">
+        <h2>レシピ追加</h2>
+
+        <input id="inputTitle" placeholder="タイトル"><br><br>
+
+        <select id="inputCategory">
+            <option>主食</option>
+            <option>肉類</option>
+            <option>魚類</option>
+            <option>副菜</option>
+            <option>おやつ</option>
+            <option>他</option>
+        </select>
+
+        <select id="inputSource">
+            <option value="original">自作</option>
+            <option value="arranged">アレンジ</option>
+            <option value="reference">参考</option>
+        </select><br><br>
+
+        <label>評価: <span id="ratingValue">未設定</span></label><br>
+        <input type="range" id="inputRating" min="0" max="5" value="0"><br><br>
+
+        <input type="url" id="inputUrl" placeholder="URL"><br>
+        <input type="url" id="inputImage" placeholder="画像URL">
+        <input type="file" id="fileInput"><br><br>
+
+        <input id="inputTags" placeholder="タグ（カンマ区切り）"><br><br>
+
+        <h3>材料</h3>
+        <div id="ingredients"></div>
+
+        <datalist id="nameList"></datalist>
+
+        <h3>手順</h3>
+        <div id="steps"></div>
+        <h3>メモ</h3>
+        <textarea id="inputMemo" placeholder="メモ" style="width:100%; height:80px;"></textarea><br><br>
+        <button id="saveBtn">保存</button>
+        <hr>
+
+        <h3>生成されたJSON（手動で貼り付け）</h3>
+        <textarea id="jsonOutput" style="width:100%; height:150px;"></textarea><br>
+        <button id="copyBtn">コピー</button>
+
+    </div>
+
+    <script>
+        fetch("recipes.json")
+            .then(res => res.json())
+            .then(data => {
+
+                const grid = document.getElementById("grid");
+                const select = document.getElementById("sortSelect");
+
+                function formatSource(s) {
+                    if (s === "original") return "自作";
+                    if (s === "arranged") return "アレンジ";
+                    if (s === "reference") return "参考";
+                    return "";
+                }
+
+                function render(list, type) {
+                    grid.innerHTML = "";
+                    let currentGroup = null;
+
+                    list.forEach(r => {
+                        let groupKey = (type === "cat")
+                            ? (r.category || "その他")
+                            : "★ " + r.rating;
+
+                        if (groupKey !== currentGroup) {
+                            currentGroup = groupKey;
+                            const h2 = document.createElement("div");
+                            h2.className = "group-title";
+                            h2.textContent = groupKey;
+                            grid.appendChild(h2);
+                        }
+
+                        const card = document.createElement("div");
+                        card.className = "card";
+                        card.onclick = () => location.href = "detail.html?id=" + r.id;
+
+                        const wrap = document.createElement("div");
+                        wrap.className = "img-wrap";
+
+                        if (r.image && r.image.trim() !== "") {
+                            const img = document.createElement("img");
+                            img.src = r.image;
+                            img.className = "card-img";
+                            wrap.appendChild(img);
+                        } else {
+                            const p = document.createElement("div");
+                            p.className = "no-image-box";
+                            p.textContent = "🍽";
+                            wrap.appendChild(p);
+                        }
+
+                        const rating = document.createElement("div");
+                        rating.className = "rating";
+
+                        if (r.rating !== 0) {
+                            rating.textContent = "★ " + r.rating;
+                        } else {
+                            rating.style.display = "none";
+                        }
+
+                        wrap.appendChild(rating);
+
+                        const title = document.createElement("div");
+                        title.className = "title";
+                        title.textContent = r.title;
+
+                        /* ★ ここ変更 */
+                        const meta = document.createElement("div");
+                        meta.className = "meta";
+
+                        const source = document.createElement("div");
+                        source.className = "source";
+                        source.textContent = formatSource(r.source);
+
+                        const category = document.createElement("div");
+                        category.className = "category";
+                        category.textContent = r.category || "";
+
+                        meta.appendChild(category);
+
+                        meta.appendChild(source);
+
+                        card.appendChild(wrap);
+                        card.appendChild(title);
+                        card.appendChild(meta);
+
+                        grid.appendChild(card);
+                    });
+                }
+
+                function sortData(type) {
+                    let sorted = [...data];
+                    const order = ["主食", "肉類", "魚類", "副菜", "おやつ", "他"];
+
+                    if (type === "cat") {
+                        sorted.sort((a, b) => {
+                            const iA = order.indexOf(a.category || "他");
+                            const iB = order.indexOf(b.category || "他");
+
+                            return iA !== iB ? iA - iB : a.rating - b.rating;
+                        });
+                    }
+
+                    if (type === "rating") {
+                        sorted.sort((a, b) => {
+                            if (a.rating !== b.rating) return b.rating - a.rating;
+                            return order.indexOf(a.category || "他")
+                                - order.indexOf(b.category || "他");
+
+                        });
+                    }
+
+                    render(sorted, type);
+                }
+
+                sortData("cat");
+                select.addEventListener("change", () => sortData(select.value));
+
+                /* ===== モーダル ===== */
+
+                const modal = document.getElementById("modal");
+                const bg = document.getElementById("modalBg");
+                const addBtn = document.getElementById("addBtn");
+
+
+                bg.onclick = () => {
+                    modal.style.display = "none";
+                    bg.style.display = "none";
+                };
+
+                /* ===== 評価スライダー ===== */
+                const ratingInput = document.getElementById("inputRating");
+                const ratingValue = document.getElementById("ratingValue");
+
+                ratingInput.oninput = () => {
+                    const val = Number(ratingInput.value);
+                    ratingValue.textContent = val === 0 ? "未設定" : val;
+                };
+                /* ===== 材料 ===== */
+
+                function getAllNames() {
+                    const set = new Set();
+                    data.forEach(r => {
+                        (r.ingredients || []).forEach(i => {
+                            if (i.name) set.add(i.name);
+                        });
+                    });
+                    return [...set];
+                }
+
+                function updateDatalist() {
+                    const list = document.getElementById("nameList");
+                    list.innerHTML = "";
+                    getAllNames().forEach(n => {
+                        const opt = document.createElement("option");
+                        opt.value = n;
+                        list.appendChild(opt);
+                    });
+                }
+
+
+                function addRow() {
+                    const row = document.createElement("div");
+                    row.className = "ingredient-row";
+
+                    row.innerHTML = `
+
+                    
+    <select class="group">
+        <option value="">-</option> <!-- ← これ追加 -->
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+        <option value="D">D</option>
+    </select>
+
+    <input class="name" list="nameList" placeholder="材料">
+    <input class="amount" type="number" placeholder="量">
+
+    
+    <select class="unit">
+        <option>g</option>
+        <option>ml</option>
+        <option>個</option>
+        <option>枚</option>
+        <option>袋</option>
+        <option>本</option>
+        <option>大さじ</option>
+        <option>中さじ</option>
+        <option>小さじ</option>
+        <option>適量</option>
+        <option>少々</option>
+    </select>
+
+
+    `;
+
+                    const nameInput = row.querySelector(".name");
+
+                    nameInput.addEventListener("input", () => {
+                        if (nameInput.value && row === document.querySelector("#ingredients").lastChild) {
+                            addRow();
+                        }
+                        generateJson(); // ←追加
+                    });
+
+                    document.getElementById("ingredients").appendChild(row);
+                }
+
+                function initIngredients() {
+                    const box = document.getElementById("ingredients");
+                    box.innerHTML = "";
+                    updateDatalist();
+                    addRow();
+                }
+
+                function initSteps() {
+                    const box = document.getElementById("steps");
+                    box.innerHTML = "";
+                    addStepRow();
+                }
+
+                function addStepRow() {
+                    const box = document.getElementById("steps");
+
+                    const row = document.createElement("div");
+                    row.className = "step-row";
+
+                    const num = document.createElement("div");
+                    num.className = "step-num";
+                    num.textContent = box.children.length + 1;
+
+                    const input = document.createElement("input");
+                    input.className = "step-input";
+                    input.placeholder = "手順";
+
+                    row.appendChild(num);
+                    row.appendChild(input);
+
+                    input.addEventListener("input", () => {
+                        if (input.value && row === box.lastChild) {
+                            addStepRow();
+                        }
+                        generateJson(); // ←追加
+                    });
+
+                    box.appendChild(row);
+                }
+
+                function updateStepNumbers() {
+                    document.querySelectorAll(".step-row").forEach((row, i) => {
+                        row.querySelector(".step-num").textContent = i + 1;
+                    });
+                }
+
+                addBtn.onclick = () => {
+                    modal.style.display = "block";
+                    bg.style.display = "block";
+                    initIngredients();
+                    initSteps(); // ← 追加
+                    document.getElementById("inputMemo").value = ""; // ←追加
+                    generateJson(); // ←追加
+                };
+
+                function generateJson() {
+
+                    const title = document.getElementById("inputTitle").value.trim();
+
+                    const ingredients = [];
+                    document.querySelectorAll(".ingredient-row").forEach(r => {
+                        const name = r.querySelector(".name").value.trim();
+                        if (!name) return;
+
+                        ingredients.push({
+                            group: r.querySelector(".group").value || null,
+                            name,
+                            amount: Number(r.querySelector(".amount").value || 0),
+                            unit: r.querySelector(".unit").value
+                        });
+                    });
+
+                    const steps = [];
+                    document.querySelectorAll(".step-row").forEach(r => {
+                        const val = r.querySelector("input").value.trim();
+                        if (val) steps.push(val);
+                    });
+
+                    const tags = document.getElementById("inputTags").value
+                        .split(",")
+                        .map(t => t.trim())
+                        .filter(t => t);
+
+                    const newRecipe = {
+                        id: Date.now(), // ※毎回変わるけど問題なし（貼る時の値でOK）
+                        title,
+
+                        source: document.getElementById("inputSource").value,
+                        category: document.getElementById("inputCategory").value,
+
+                        tags,
+                        rating: Number(document.getElementById("inputRating").value),
+
+                        image: document.getElementById("inputImage").value,
+                        url: document.getElementById("inputUrl").value,
+
+                        ingredients,
+                        steps,
+
+                        memo: document.getElementById("inputMemo").value.trim()
+                    };
+
+                    document.getElementById("jsonOutput").value =
+                        JSON.stringify(newRecipe, null, 2);
+                }
+
+                /* ===== 保存 ===== */
+                document.getElementById("saveBtn").onclick = () => {
+
+                    const title = document.getElementById("inputTitle").value.trim();
+                    if (!title) return alert("タイトルを入力してください");
+
+                    const ingredients = [];
+                    document.querySelectorAll(".ingredient-row").forEach(r => {
+                        const groupVal = r.querySelector(".group").value;
+
+                        const name = r.querySelector(".name").value.trim();
+                        if (!name) return;
+
+                        ingredients.push({
+                            group: groupVal === "" ? null : groupVal,
+                            name,
+                            amount: Number(r.querySelector(".amount").value || 0),
+                            unit: r.querySelector(".unit").value
+                        });
+                    });
+
+                    const steps = [];
+                    document.querySelectorAll(".step-row").forEach(r => {
+                        const val = r.querySelector("input").value.trim();
+                        if (val) steps.push(val);
+                    });
+
+                    const tags = document.getElementById("inputTags").value
+                        .split(",")
+                        .map(t => t.trim())
+                        .filter(t => t);
+
+                    const newRecipe = {
+                        id: Date.now(),
+                        title,
+
+                        source: document.getElementById("inputSource").value,
+
+                        category: document.getElementById("inputCategory").value,
+                        tags,
+
+                        rating: Number(ratingInput.value),
+
+                        image: document.getElementById("inputImage").value,
+                        url: document.getElementById("inputUrl").value,
+
+                        ingredients,
+
+                        steps,
+
+                        memo: document.getElementById("inputMemo").value.trim()
+                    };
+
+                    // ★ここ追加（JSON表示）
+                    const jsonText = JSON.stringify(newRecipe, null, 2);
+                    document.getElementById("jsonOutput").value = jsonText;
+
+
+                    data.push(newRecipe);
+                    sortData(select.value);
+
+                    modal.style.display = "none";
+                    bg.style.display = "none";
+                };
+
+                document.getElementById("copyBtn").onclick = () => {
+                    const textarea = document.getElementById("jsonOutput");
+                    textarea.select();
+                    document.execCommand("copy");
+                    alert("コピーしました");
+                };
+                document.getElementById("modal").addEventListener("input", generateJson);
+            });
+    </script>
+
+</body>
+
+</html>

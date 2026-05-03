@@ -1,0 +1,626 @@
+<!-- detail.html -->
+
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>レシピ詳細</title>
+
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            line-height: 1.6;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        img {
+            width: 100%;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .url-full {
+            display: block;
+            font-size: 12px;
+            color: #0077cc;
+            text-decoration: none;
+            margin-top: 4px;
+            word-break: break-all;
+        }
+
+        .url-full:hover {
+            text-decoration: underline;
+        }
+
+        .url-domain {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .section {
+            margin-top: 20px;
+        }
+
+        /* 材料テーブル */
+        .ingredients-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .ingredients-table td {
+            padding: 4px 12px;
+            vertical-align: top;
+            /* 内枠 */
+            border-right: 1px solid #dddddd;
+            border-bottom: 1px solid #dddddd;
+        }
+
+        .ingredients-table td:nth-child(1) {
+            width: 5%;
+            text-align: center;
+        }
+
+        .ingredients-table td:nth-child(2) {
+            width: 50%;
+        }
+
+        .ingredients-table td:nth-child(3) {
+            width: 45%;
+        }
+
+        /* 右端は線なし */
+        .ingredients-table td:last-child {
+            border-right: none;
+        }
+
+        /* 最終行は下線なし */
+        .ingredients-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* 手順 */
+        ol {
+            padding-left: 20px;
+        }
+
+        ol li {
+            padding: 2px 8px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+        }
+
+        .memo {
+            margin-top: 10px;
+            color: #444;
+        }
+
+        .group-A {
+            background-color: #ffeaea;
+        }
+
+        .group-B {
+            background-color: #eaffea;
+        }
+
+        .group-C {
+            background-color: #eaeaff;
+        }
+
+        .group-D {
+            background-color: #fff7d8;
+        }
+
+        /* ===== 編集ボタン ===== */
+        #editBtn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            background: #4dabf7;
+            color: #fff;
+            font-size: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        /* ===== モーダル（indexと同じ） ===== */
+        #modalBg {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+        }
+
+        #modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            max-height: 80vh;
+            overflow: auto;
+        }
+
+        .ingredient-row {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+
+        .ingredient-row .amount {
+            width: 60px;
+        }
+
+        .step-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .step-num {
+            width: 20px;
+            color: #666;
+        }
+
+        .step-input {
+            flex: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <img id="image">
+
+    <h1 id="title"></h1>
+
+    <div class="meta" id="meta"></div>
+
+    <div id="linkArea" style="margin-bottom: 10px;"></div>
+    <div class="section">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <h2>材料</h2>
+
+            <select id="servingSelect">
+                <option value="1">基本</option>
+                <option value="2">2倍</option>
+                <option value="0.5">半分</option>
+                <option value="0.33">1/3</option>
+            </select>
+
+            <span id="servingNote" style="color: #666; font-size: 14px;"></span>
+        </div>
+        <table class="ingredients-table" id="ingredients"></table>
+    </div>
+
+    <div class="section">
+        <h2>手順</h2>
+        <ol id="steps"></ol>
+    </div>
+
+    <div class="section">
+        <h2>メモ</h2>
+        <div id="memo" class="memo"></div>
+    </div>
+
+    <!-- 編集ボタン -->
+    <div id="editBtn">✏️</div>
+
+    <!-- モーダル -->
+    <div id="modalBg"></div>
+
+    <div id="modal">
+        <h2>レシピ編集</h2>
+
+        <input id="inputTitle" placeholder="タイトル"><br><br>
+
+        <select id="inputCategory">
+            <option>主食</option>
+            <option>肉類</option>
+            <option>魚類</option>
+            <option>副菜</option>
+            <option>おやつ</option>
+            <option>他</option>
+        </select>
+
+        <select id="inputSource">
+            <option value="original">自作</option>
+            <option value="arranged">アレンジ</option>
+            <option value="reference">参考</option>
+        </select><br><br>
+
+        <label>評価: <span id="ratingValue">未設定</span></label><br>
+        <input type="range" id="inputRating" min="0" max="5" value="0"><br><br>
+
+        <input type="url" id="inputUrl" placeholder="URL"><br>
+        <input type="url" id="inputImage" placeholder="画像URL">
+        <input type="file" id="fileInput"><br><br>
+
+        <input id="inputTags" placeholder="タグ（カンマ区切り）"><br><br>
+
+        <h3>材料</h3>
+        <div id="ingredientsEdit"></div>
+
+        <h3>手順</h3>
+        <div id="stepsEdit"></div>
+
+        <button id="saveBtn">保存</button>
+    </div>
+
+    <script>
+        fetch("recipes.json")
+            .then(res => res.json())
+            .then(data => {
+                const id = new URLSearchParams(location.search).get("id");
+                const recipe = data.find(r => r.id == id);
+
+                // =========================
+                // 基本表示
+                // =========================
+
+                document.getElementById("title").textContent = recipe.title;
+                const img = document.getElementById("image");
+
+                if (recipe.image && recipe.image.trim() !== "") {
+                    img.src = recipe.image;
+                } else {
+                    img.style.display = "none";
+                }
+
+                const sourceMap = {
+                    original: "自作",
+                    arranged: "アレンジ",
+                    reference: "元レシピ"
+                };
+
+                const rating = recipe.rating === 0
+                    ? "評価なし"
+                    : "★".repeat(recipe.rating) + "☆".repeat(5 - recipe.rating);
+
+                const metaText = `
+${rating}<br>
+カテゴリ：${recipe.category || ""}<br>
+タグ：${(recipe.tags || []).join(" / ")}<br>
+作成：${sourceMap[recipe.source]}
+`;
+
+                document.getElementById("meta").innerHTML = metaText;
+
+                // =========================
+                // リンク表示（シンプル版）
+                // =========================
+                const linkArea = document.getElementById("linkArea");
+
+                if (recipe.url && recipe.url.trim() !== "") {
+
+                    // 🔗 URLリンク（これがメイン）
+                    const urlLink = document.createElement("a");
+                    urlLink.href = recipe.url;
+                    urlLink.target = "_blank";
+                    urlLink.className = "url-full";
+                    urlLink.textContent = "🔗 " + recipe.url;
+
+                    // 🌐 ドメイン
+                    const domainText = document.createElement("div");
+                    domainText.className = "url-domain";
+
+                    try {
+                        const urlObj = new URL(recipe.url);
+                        domainText.textContent = urlObj.hostname;
+                    } catch {
+                        domainText.textContent = "";
+                    }
+
+                    linkArea.appendChild(urlLink);
+                    linkArea.appendChild(domainText);
+                }
+                // =========================
+                // 分量フォーマット
+                // =========================
+                function formatAmount(i, ratio) {
+                    let text = "";
+
+                    const reverseUnits = ["大さじ", "中さじ", "小さじ"];
+
+                    if (i.amount !== null) {
+                        let val = i.amount * ratio;
+
+                        // 小数調整（最大2桁）
+                        val = Math.round(val * 100) / 100;
+
+                        if (reverseUnits.includes(i.unit)) {
+                            text += i.unit + val;
+                        } else {
+                            text += val + i.unit;
+                        }
+                    } else {
+                        text += i.unit;
+                    }
+
+                    if (i.grams) {
+                        const g = Math.round(i.grams * ratio);
+                        text += "（" + g + "g）";
+                    }
+
+                    return text;
+                }
+
+                // =========================
+                // 材料描画
+                // =========================
+                function renderIngredients(ratio) {
+                    const table = document.getElementById("ingredients");
+                    table.innerHTML = "";
+
+                    recipe.ingredients.forEach(i => {
+                        const tr = document.createElement("tr");
+
+                        // group
+                        const tdGroup = document.createElement("td");
+                        tdGroup.textContent = i.group ? i.group : "";
+
+                        // name
+                        const tdName = document.createElement("td");
+                        tdName.textContent = i.name;
+
+                        // amount
+                        const tdAmount = document.createElement("td");
+                        tdAmount.textContent = formatAmount(i, ratio);
+
+                        // 背景色
+                        if (i.group) {
+                            tr.classList.add("group-" + i.group);
+                        }
+
+                        tr.appendChild(tdGroup);
+                        tr.appendChild(tdName);
+                        tr.appendChild(tdAmount);
+
+                        table.appendChild(tr);
+                    });
+                }
+
+                // =========================
+                // 初期表示
+                // =========================
+                renderIngredients(1);
+
+                // =========================
+                // プルダウン制御
+                // =========================
+                const select = document.getElementById("servingSelect");
+                const note = document.getElementById("servingNote");
+
+                select.addEventListener("change", () => {
+                    const ratio = parseFloat(select.value);
+
+                    renderIngredients(ratio);
+
+                    // 注意書き
+                    if (ratio === 1) {
+                        note.textContent = "";
+                    } else if (ratio === 2) {
+                        note.textContent = "以下は、2倍のレシピです。";
+                    } else if (ratio === 0.5) {
+                        note.textContent = "以下は、半分のレシピです。";
+                    } else if (ratio === 0.33) {
+                        note.textContent = "以下は、1/3のレシピです。";
+                    }
+                });
+
+
+                // =========================
+                // 手順（グループ色対応）
+                // =========================
+                const stepList = document.getElementById("steps");
+
+                recipe.steps.forEach(s => {
+                    const li = document.createElement("li");
+                    li.textContent = s;
+
+                    // グループ判定（A〜D）
+                    if (s.startsWith("A")) {
+                        li.classList.add("group-A");
+                    } else if (s.startsWith("B")) {
+                        li.classList.add("group-B");
+                    } else if (s.startsWith("C")) {
+                        li.classList.add("group-C");
+                    } else if (s.startsWith("D")) {
+                        li.classList.add("group-D");
+                    }
+
+                    stepList.appendChild(li);
+                });
+
+                // =========================
+                // メモ
+                // =========================
+                document.getElementById("memo").textContent = recipe.memo;
+
+                // =========================
+                // 編集モーダル
+                // =========================
+
+                const editBtn = document.getElementById("editBtn");
+                const modal = document.getElementById("modal");
+                const bg = document.getElementById("modalBg");
+
+                editBtn.onclick = () => {
+                    modal.style.display = "block";
+                    bg.style.display = "block";
+                    loadForm();
+                };
+
+                bg.onclick = () => {
+                    modal.style.display = "none";
+                    bg.style.display = "none";
+                };
+
+                // ===== 評価表示 =====
+                const ratingInput = document.getElementById("inputRating");
+                const ratingValue = document.getElementById("ratingValue");
+
+                ratingInput.oninput = () => {
+                    const val = Number(ratingInput.value);
+                    ratingValue.textContent = val === 0 ? "未設定" : val;
+                };
+
+                // ===== フォーム初期化 =====
+                function loadForm() {
+                    document.getElementById("inputTitle").value = recipe.title;
+                    document.getElementById("inputCategory").value = recipe.category;
+                    document.getElementById("inputSource").value = recipe.source;
+                    document.getElementById("inputRating").value = recipe.rating;
+                    document.getElementById("inputUrl").value = recipe.url || "";
+                    document.getElementById("inputImage").value = recipe.image || "";
+                    document.getElementById("inputTags").value = (recipe.tags || []).join(",");
+
+                    ratingValue.textContent = recipe.rating === 0 ? "未設定" : recipe.rating;
+
+                    initIngredients();
+                    initSteps();
+                }
+
+                // ===== 材料 =====
+                function addRow(data = {}) {
+                    const row = document.createElement("div");
+                    row.className = "ingredient-row";
+
+                    row.innerHTML = `
+<select class="group">
+<option value="">-</option>
+<option value="A">A</option>
+<option value="B">B</option>
+<option value="C">C</option>
+<option value="D">D</option>
+</select>
+<input class="name" placeholder="材料">
+<input class="amount" type="number">
+<select class="unit">
+<option>g</option><option>ml</option><option>個</option><option>枚</option>
+<option>袋</option><option>本</option>
+<option>大さじ</option><option>中さじ</option><option>小さじ</option>
+<option>適量</option><option>少々</option>
+</select>
+`;
+
+                    row.querySelector(".group").value = data.group || "";
+                    row.querySelector(".name").value = data.name || "";
+                    row.querySelector(".amount").value = data.amount || "";
+                    row.querySelector(".unit").value = data.unit || "g";
+
+                    const nameInput = row.querySelector(".name");
+                    nameInput.addEventListener("input", () => {
+                        if (nameInput.value && row === ingredientsEdit.lastChild) {
+                            addRow();
+                        }
+                    });
+
+                    ingredientsEdit.appendChild(row);
+                }
+
+                function initIngredients() {
+                    ingredientsEdit.innerHTML = "";
+                    recipe.ingredients.forEach(i => addRow(i));
+                    addRow();
+                }
+
+                // ===== 手順 =====
+                function addStepRow(val = "") {
+                    const row = document.createElement("div");
+                    row.className = "step-row";
+
+                    const num = document.createElement("div");
+                    num.className = "step-num";
+                    num.textContent = stepsEdit.children.length + 1;
+
+                    const input = document.createElement("input");
+                    input.className = "step-input";
+                    input.value = val;
+
+                    input.addEventListener("input", () => {
+                        if (input.value && row === stepsEdit.lastChild) {
+                            addStepRow();
+                        }
+                    });
+
+                    row.appendChild(num);
+                    row.appendChild(input);
+                    stepsEdit.appendChild(row);
+                }
+
+                function initSteps() {
+                    stepsEdit.innerHTML = "";
+                    recipe.steps.forEach(s => addStepRow(s));
+                    addStepRow();
+                }
+
+                // ===== 保存 =====
+                document.getElementById("saveBtn").onclick = () => {
+
+                    recipe.title = document.getElementById("inputTitle").value.trim();
+                    recipe.category = document.getElementById("inputCategory").value;
+                    recipe.source = document.getElementById("inputSource").value;
+                    recipe.rating = Number(document.getElementById("inputRating").value);
+                    recipe.url = document.getElementById("inputUrl").value;
+                    recipe.image = document.getElementById("inputImage").value;
+
+                    recipe.tags = document.getElementById("inputTags").value
+                        .split(",")
+                        .map(t => t.trim())
+                        .filter(t => t);
+
+                    // 材料
+                    recipe.ingredients = [];
+                    document.querySelectorAll("#ingredientsEdit .ingredient-row").forEach(r => {
+                        const name = r.querySelector(".name").value.trim();
+                        if (!name) return;
+
+                        recipe.ingredients.push({
+                            group: r.querySelector(".group").value || null,
+                            name,
+                            amount: Number(r.querySelector(".amount").value || 0),
+                            unit: r.querySelector(".unit").value
+                        });
+                    });
+
+                    // 手順
+                    recipe.steps = [];
+                    document.querySelectorAll("#stepsEdit .step-input").forEach(i => {
+                        if (i.value.trim()) recipe.steps.push(i.value.trim());
+                    });
+
+                    alert("保存しました（※ローカルのみ）");
+
+                    modal.style.display = "none";
+                    bg.style.display = "none";
+
+                    location.reload(); // 表示更新
+                };
+
+            });
+    </script>
+
+</body>
+
+</html>
