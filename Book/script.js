@@ -1,7 +1,5 @@
-// /script.js
-// Todo:
-// ・CSVキャッシュ対応
-// ・並び替え（読了の詳細調整）
+// Book/script.js
+// bk2
 
 
 // スプレッドシートの設定
@@ -13,7 +11,7 @@
 // =============================
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT3abh6WOEam-G81jfG6h_k6QhQKIjYaJP5e3vIRZkYLUbOS5Vgb3VZsFBBSeYl6sW6l9tBtDr1XzZz/pub?gid=1531015479&single=true&output=csv"; // ←後で差し替え
 
-const STATUS_ORDER = ["読みたい", "積読", "読書中", "読了"];
+const STATUS_ORDER = ["読みたい", "積読", "読書中", "読了", "中断"];
 
 // =============================
 // CSV取得
@@ -128,6 +126,17 @@ function createGrid(items) {
 }
 
 // =============================
+// 日付順に並び替え
+// =============================
+function sortByDate(items) {
+    return items.sort((a, b) => {
+        if (!a.date) return 1;
+        if (!b.date) return -1;
+        return new Date(a.date) - new Date(b.date);
+    });
+}
+
+// =============================
 // 描画
 // =============================
 function render(data) {
@@ -141,6 +150,8 @@ function render(data) {
         // ★ 「読みたい」と「積読」のみ著者昇順 → 同著者内でタイトル昇順
         if (status === "読みたい" || status === "積読") {
             items = sortByAuthorAndTitle(items);
+        } else if (status === "中断") {
+            items = sortByDate(items);
         }
 
         const block = document.createElement("div");
@@ -182,6 +193,8 @@ function render(data) {
             });
 
         } else {
+            // 「中断」もここに入るため、
+            // 読了以外のステータスと同じ通常グリッド表示になる
             const grid = createGrid(items);
             block.appendChild(grid);
         }
